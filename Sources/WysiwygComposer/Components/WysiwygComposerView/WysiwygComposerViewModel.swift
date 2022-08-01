@@ -16,12 +16,14 @@
 
 import Foundation
 import OSLog
+import UIKit
 
 /// Main view model for the `WysiwygComposerView`. Provides user actions
 /// to the Rust model and publishes result `WysiwygComposerViewState`.
 class WysiwygComposerViewModel: ObservableObject {
     // MARK: - Internal
     @Published var viewState: WysiwygComposerViewState
+    var requiredHeightDidChange: ((CGFloat) -> Void)?
 
     // MARK: - Private
     private var model: ComposerModel
@@ -31,7 +33,8 @@ class WysiwygComposerViewModel: ObservableObject {
         self.model = newComposerModel()
         self.viewState = WysiwygComposerViewState(
             textSelection: .init(location: 0, length: 0),
-            displayText: NSAttributedString()
+            displayText: NSAttributedString(),
+            requiredHeight: 110
         )
     }
 
@@ -68,6 +71,16 @@ class WysiwygComposerViewModel: ObservableObject {
                           endUtf16Codeunit: UInt32(range.location+range.length))
     }
 
+    func didUpdateText(textView: UITextView) {
+        let requiredHeight = 80 + textView.sizeThatFits(CGSize(width: textView.bounds.size.width,
+                                                               height: CGFloat.greatestFiniteMagnitude)).height
+        let size = CGSize(width: textView.bounds.size.width,
+                          height: requiredHeight)
+        Logger.composer.debug("Required size changed: \(size.height)")
+        self.viewState.requiredHeight = requiredHeight
+        self.requiredHeightDidChange?(requiredHeight)
+    }
+
     /// Apply bold formatting to the current selection.
     func applyBold() {
         let update = self.model.bold()
@@ -91,7 +104,8 @@ private extension WysiwygComposerViewModel {
                 let textSelection = NSRange(location: Int(start), length: Int(end-start))
                 self.viewState = WysiwygComposerViewState(
                     textSelection: textSelection,
-                    displayText: attributed
+                    displayText: attributed,
+                    requiredHeight: self.viewState.requiredHeight
                 )
                 Logger.composer.debug("HTML from Rust: \(html), selection: \(textSelection)")
             } catch {

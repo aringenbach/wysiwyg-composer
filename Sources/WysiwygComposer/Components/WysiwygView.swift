@@ -17,21 +17,30 @@
 import SwiftUI
 
 public struct WysiwygView: View {
+    private var requiredHeightDidChange: (CGFloat) -> Void
+
     // MARK: - Public
     public var body: some View {
         VStack {
             WysiwygComposerView(viewState: viewModel.viewState,
                                 replaceText: viewModel.replaceText,
-                                select: viewModel.select)
+                                select: viewModel.select,
+                                didUpdateText: viewModel.didUpdateText)
+            .onAppear {
+                viewModel.requiredHeightDidChange = self.requiredHeightDidChange
+            }
             Button("Bold") {
                 viewModel.applyBold()
             }
+            .frame(width: nil, height: 80, alignment: .center)
             .buttonStyle(.automatic)
             .accessibilityIdentifier("WysiwygBoldButton")
         }
     }
 
-    public init() {}
+    public init(requiredHeightDidChange: @escaping (CGFloat) -> ()) {
+        self.requiredHeightDidChange = requiredHeightDidChange
+    }
 
     // MARK: - Internal
     @StateObject var viewModel = WysiwygComposerViewModel()

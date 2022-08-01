@@ -15,6 +15,7 @@
 //
 
 import Foundation
+import CoreGraphics
 
 /// Describe the current state of the composer.
 struct WysiwygComposerViewState {
@@ -22,4 +23,6 @@ struct WysiwygComposerViewState {
     var textSelection: NSRange
     /// Current text to display.
     var displayText: NSAttributedString
+
+    var requiredHeight: CGFloat
 }
