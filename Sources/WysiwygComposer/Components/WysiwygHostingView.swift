@@ -17,15 +17,15 @@
 import UIKit
 import SwiftUI
 
-@objc protocol WysiwygHostingViewDelegate: AnyObject {
+@objc public protocol WysiwygHostingViewDelegate: AnyObject {
     func requiredHeightDidChange(_ height: CGFloat)
 }
 
 @objcMembers
-final class WysiwygHostingView: UIView {
-    weak var delegate: WysiwygHostingViewDelegate?
+public final class WysiwygHostingView: UIView {
+    public weak var delegate: WysiwygHostingViewDelegate?
 
-    override func awakeFromNib() {
+    public override func awakeFromNib() {
         super.awakeFromNib()
         let hostingController = UIHostingController(rootView: WysiwygView(requiredHeightDidChange: { [weak self] height in
             self?.delegate?.requiredHeightDidChange(height)
