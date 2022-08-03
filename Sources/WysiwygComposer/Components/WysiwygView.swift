@@ -15,10 +15,9 @@
 //
 
 import SwiftUI
+import OSLog
 
 public struct WysiwygView: View {
-    private var requiredHeightDidChange: (CGFloat) -> Void
-
     // MARK: - Public
     public var body: some View {
         VStack {
@@ -26,21 +25,32 @@ public struct WysiwygView: View {
                                 replaceText: viewModel.replaceText,
                                 select: viewModel.select,
                                 didUpdateText: viewModel.didUpdateText)
-            .onAppear {
-                viewModel.requiredHeightDidChange = self.requiredHeightDidChange
-            }
+            .padding(.all, 8)
+            /*
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(.blue)
+            )
+             */
+            .padding([.leading, .trailing], 8)
+            .padding([.top, .bottom], 4)
+            .preference(key: MessageContentPreferenceKey.self,
+                        value: MessageContent(plainText: viewModel.viewState.displayText.string,
+                                              html: viewModel.viewState.html))
+            .preference(key: RequiredHeightPreferenceKey.self,
+                        value: viewModel.viewState.requiredHeight)
+            .preference(key: IsEmptyContentPreferenceKey.self,
+                        value: viewModel.viewState.displayText.string.isEmpty)
             Button("Bold") {
                 viewModel.applyBold()
             }
-            .frame(width: nil, height: 80, alignment: .center)
+            .frame(width: nil, height: 50, alignment: .center)
             .buttonStyle(.automatic)
             .accessibilityIdentifier("WysiwygBoldButton")
         }
     }
 
-    public init(requiredHeightDidChange: @escaping (CGFloat) -> ()) {
-        self.requiredHeightDidChange = requiredHeightDidChange
-    }
+    public init() {}
 
     // MARK: - Internal
     @StateObject var viewModel = WysiwygComposerViewModel()

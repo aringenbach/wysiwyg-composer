@@ -16,36 +16,33 @@
 
 import UIKit
 import SwiftUI
+import OSLog
 
 @objc public protocol WysiwygHostingViewDelegate: AnyObject {
     func requiredHeightDidChange(_ height: CGFloat)
+    func isEmptyContentDidChange(_ isEmpty: Bool)
 }
 
 @objcMembers
 public final class WysiwygHostingView: UIView {
     public weak var delegate: WysiwygHostingViewDelegate?
 
+    public private(set) var content: MessageContent = MessageContent()
+
     public override func awakeFromNib() {
         super.awakeFromNib()
-        let hostingController = UIHostingController(rootView: WysiwygView(requiredHeightDidChange: { [weak self] height in
-            self?.delegate?.requiredHeightDidChange(height)
-        }))
-        addSubViewMatchingParent(hostingController.view)
-    }
-}
+        let wysiwygView = WysiwygView()
+            .onPreferenceChange(MessageContentPreferenceKey.self) { [unowned self] (messageContent: MessageContent) in
+                self.content = messageContent
+            }
+            .onPreferenceChange(RequiredHeightPreferenceKey.self) { [unowned self] (height: CGFloat) in
+                self.delegate?.requiredHeightDidChange(height)
+            }
+            .onPreferenceChange(IsEmptyContentPreferenceKey.self) { [unowned self] (isEmpty: Bool) in
+                self.delegate?.isEmptyContentDidChange(isEmpty)
+            }
 
-extension UIView {
-    /// Add a subview matching parent view using autolayout
-    func addSubViewMatchingParent(_ subView: UIView) {
-        self.addSubview(subView)
-        subView.translatesAutoresizingMaskIntoConstraints = false
-        let views = ["view": subView]
-        ["H:|[view]|", "V:|[view]|"].forEach { vfl in
-            let constraints = NSLayoutConstraint.constraints(withVisualFormat: vfl,
-                                                             options: [],
-                                                             metrics: nil,
-                                                             views: views)
-            constraints.forEach { $0.isActive = true }
-        }
+        let hostingController = UIHostingController(rootView: wysiwygView)
+        addSubViewMatchingParent(hostingController.view)
     }
 }

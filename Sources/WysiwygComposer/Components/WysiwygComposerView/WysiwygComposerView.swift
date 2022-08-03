@@ -29,7 +29,7 @@ struct WysiwygComposerView: UIViewRepresentable {
         let textView = UITextView()
 
         textView.accessibilityIdentifier = "WysiwygComposer"
-        textView.font = UIFont.systemFont(ofSize: 24)
+        textView.font = UIFont(name: "Times New Roman", size: 12.0)
         textView.autocapitalizationType = .sentences
         textView.isSelectable = true
         textView.isUserInteractionEnabled = true

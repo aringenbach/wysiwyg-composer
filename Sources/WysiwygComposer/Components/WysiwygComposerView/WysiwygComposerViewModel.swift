@@ -23,7 +23,6 @@ import UIKit
 class WysiwygComposerViewModel: ObservableObject {
     // MARK: - Internal
     @Published var viewState: WysiwygComposerViewState
-    var requiredHeightDidChange: ((CGFloat) -> Void)?
 
     // MARK: - Private
     private var model: ComposerModel
@@ -34,7 +33,8 @@ class WysiwygComposerViewModel: ObservableObject {
         self.viewState = WysiwygComposerViewState(
             textSelection: .init(location: 0, length: 0),
             displayText: NSAttributedString(),
-            requiredHeight: 110
+            requiredHeight: 110,
+            html: ""
         )
     }
 
@@ -72,13 +72,7 @@ class WysiwygComposerViewModel: ObservableObject {
     }
 
     func didUpdateText(textView: UITextView) {
-        let requiredHeight = 80 + textView.sizeThatFits(CGSize(width: textView.bounds.size.width,
-                                                               height: CGFloat.greatestFiniteMagnitude)).height
-        let size = CGSize(width: textView.bounds.size.width,
-                          height: requiredHeight)
-        Logger.composer.debug("Required size changed: \(size.height)")
-        self.viewState.requiredHeight = requiredHeight
-        self.requiredHeightDidChange?(requiredHeight)
+        self.updateRequiredHeightIfNeeded(textView)
     }
 
     /// Apply bold formatting to the current selection.
@@ -105,7 +99,8 @@ private extension WysiwygComposerViewModel {
                 self.viewState = WysiwygComposerViewState(
                     textSelection: textSelection,
                     displayText: attributed,
-                    requiredHeight: self.viewState.requiredHeight
+                    requiredHeight: self.viewState.requiredHeight,
+                    html: html
                 )
                 Logger.composer.debug("HTML from Rust: \(html), selection: \(textSelection)")
             } catch {
@@ -114,5 +109,16 @@ private extension WysiwygComposerViewModel {
         default:
             break
         }
+    }
+
+    func updateRequiredHeightIfNeeded(_ textView: UITextView) {
+        // TODO: remove magic numbers
+        let requiredHeight = 50 + 16 + 8 + textView
+            .sizeThatFits(CGSize(width: textView.bounds.size.width,
+                                 height: CGFloat.greatestFiniteMagnitude)
+            )
+            .height
+        guard requiredHeight != viewState.requiredHeight else { return }
+        self.viewState.requiredHeight = requiredHeight
     }
 }
