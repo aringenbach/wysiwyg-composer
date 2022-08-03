@@ -24,7 +24,7 @@ public struct MessageContentPreferenceKey: PreferenceKey {
     }
 }
 
-public struct MessageContent: Equatable {
+@objc public class MessageContent: NSObject {
     public let plainText: String
     public let html: String
 
