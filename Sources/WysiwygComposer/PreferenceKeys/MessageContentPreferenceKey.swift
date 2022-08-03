@@ -24,7 +24,8 @@ public struct MessageContentPreferenceKey: PreferenceKey {
     }
 }
 
-@objc public class MessageContent: NSObject {
+@objcMembers
+public class MessageContent: NSObject {
     public let plainText: String
     public let html: String
 
