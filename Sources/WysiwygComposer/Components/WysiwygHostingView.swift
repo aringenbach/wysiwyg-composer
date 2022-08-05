@@ -16,32 +16,66 @@
 
 import UIKit
 import SwiftUI
+import Combine
 import OSLog
 
+/// Declares methods that should be adopted by an object that aim to react on the Wysiwyg composer actions.
 @objc public protocol WysiwygHostingViewDelegate: AnyObject {
-    func requiredHeightDidChange(_ height: CGFloat)
-    func isEmptyContentDidChange(_ isEmpty: Bool)
+    /// Tells the delegate that the current idealHeight of the composer has updated.
+    ///
+    /// - Parameters:
+    ///   - height: new required height
+    func idealHeightDidChange(_ height: CGFloat)
+    /// Tells the delegate that the composer empty content state has updated.
+    ///
+    /// - Parameters:
+    ///   - isEmpty: whether the composer is empty or not.
+    func isContentEmptyDidChange(_ isEmpty: Bool)
 }
 
+/// Hosting view that provides support for Wysiwyg UIKit implementation.
 @objcMembers
 public final class WysiwygHostingView: UIView {
+    // MARK: - Public
+    /// The delegate of the `WysiwygHostingView`.
     public weak var delegate: WysiwygHostingViewDelegate?
+    /// The content currently displayed in the composer.
+    public var content: WysiwygComposerContent {
+        return viewModel.content
+    }
 
-    public private(set) var content: MessageContent = MessageContent()
+    // MARK: - Private
+    @ObservedObject private var viewModel = WysiwygComposerViewModel()
+    private var cancellables: Set<AnyCancellable>?
 
+    // MARK: - Public
+    /// Clear the content of the composer.
+    public func clearContent() {
+        viewModel.clearContent()
+    }
+
+    // MARK: - Override
     public override func awakeFromNib() {
         super.awakeFromNib()
-        let wysiwygView = WysiwygView()
-            .onPreferenceChange(MessageContentPreferenceKey.self) { [unowned self] (messageContent: MessageContent) in
-                self.content = messageContent
-            }
-            .onPreferenceChange(RequiredHeightPreferenceKey.self) { [unowned self] (height: CGFloat) in
-                self.delegate?.requiredHeightDidChange(height)
-            }
-            .onPreferenceChange(IsEmptyContentPreferenceKey.self) { [unowned self] (isEmpty: Bool) in
-                self.delegate?.isEmptyContentDidChange(isEmpty)
-            }
 
+        let wysiwygView = WysiwygView()
+            .environmentObject(viewModel)
+
+        // Subscribe to relevant events and map them to UIKit-style delegate.
+        cancellables = [
+            viewModel.$isContentEmpty
+                .removeDuplicates()
+                .sink(receiveValue: { [unowned self] isContentEmpty in
+                    self.delegate?.isContentEmptyDidChange(isContentEmpty)
+                }),
+            viewModel.$idealHeight
+                .removeDuplicates()
+                .sink(receiveValue: { [unowned self] idealHeight in
+                    self.delegate?.idealHeightDidChange(idealHeight)
+                })
+        ]
+
+        // Attach the view to a hosting controller and display it's UIView container.
         let hostingController = UIHostingController(rootView: wysiwygView)
         addSubViewMatchingParent(hostingController.view)
     }

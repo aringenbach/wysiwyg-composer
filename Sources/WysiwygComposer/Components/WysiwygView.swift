@@ -17,11 +17,12 @@
 import SwiftUI
 import OSLog
 
+/// Composer's main view. Displays a text view and a toolbar for advanced edition capabilities.
 public struct WysiwygView: View {
     // MARK: - Public
     public var body: some View {
         VStack {
-            WysiwygComposerView(viewState: viewModel.viewState,
+            WysiwygComposerView(content: viewModel.content,
                                 replaceText: viewModel.replaceText,
                                 select: viewModel.select,
                                 didUpdateText: viewModel.didUpdateText)
@@ -34,13 +35,6 @@ public struct WysiwygView: View {
              */
             .padding([.leading, .trailing], 8)
             .padding([.top, .bottom], 4)
-            .preference(key: MessageContentPreferenceKey.self,
-                        value: MessageContent(plainText: viewModel.viewState.displayText.string,
-                                              html: viewModel.viewState.html))
-            .preference(key: RequiredHeightPreferenceKey.self,
-                        value: viewModel.viewState.requiredHeight)
-            .preference(key: IsEmptyContentPreferenceKey.self,
-                        value: viewModel.viewState.displayText.string.isEmpty)
             Button("Bold") {
                 viewModel.applyBold()
             }
@@ -50,8 +44,8 @@ public struct WysiwygView: View {
         }
     }
 
-    public init() {}
+    public init() { }
 
-    // MARK: - Internal
-    @StateObject var viewModel = WysiwygComposerViewModel()
+    // MARK: - Private
+    @EnvironmentObject private var viewModel: WysiwygComposerViewModel
 }
